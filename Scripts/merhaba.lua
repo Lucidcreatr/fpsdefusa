@@ -1,39 +1,45 @@
-if game.PlaceId == 79393329652220 then
+if game.PlaceId == 79393329652220 then -- GERÇEK PLACEID İLE DEĞİŞTİRİN
 
-local Rayfield = loadstring(game:HttpGet('https://sirius.menu/rayfield'))()
+local success, Rayfield = pcall(function()
+    return loadstring(game:HttpGet('https://sirius.menu/rayfield'))()
+end)
+if not success then
+    warn("Rayfield kütüphanesi yüklenemedi: " .. tostring(Rayfield))
+    return
+end
 
 local Window = Rayfield:CreateWindow({
-   Name = "LCX TEAM || Defusal FPS",
-   Icon = 0,
-   LoadingTitle = "LCX TEAM HACK",
-   LoadingSubtitle = "by LCX9.lucidcreatr,
-   Theme = "Serenity",
-   DisableRayfieldPrompts = false,
-   DisableBuildWarnings = false,
-   ConfigurationSaving = {
-      Enabled = true,
-      FolderName = nil,
-      FileName = ""
-   },
-   Discord = {
-      Enabled = true,
-      Invite = "https://discord.gg/3vvDZMG6bk",
-      RememberJoins = true
-   },
-   KeySystem = true,
-   KeySettings = {
-      Title = "Defusal | Key",
-      Subtitle = "crack by lcx",
-      Note = "Key: 5262",
-      FileName = "key_13121399",
-      SaveKey = true,
-      GrabKeyFromSite = true,
-      Key = {"5262"}
-   }
+    Name = "LCX TEAM || Defusal FPS",
+    Icon = 0,
+    LoadingTitle = "LCX Management",
+    LoadingSubtitle = "by chinjungxx",
+    Theme = "Serenity",
+    DisableRayfieldPrompts = false,
+    DisableBuildWarnings = false,
+    ConfigurationSaving = {
+        Enabled = true,
+        FolderName = nil,
+        FileName = ""
+    },
+    Discord = {
+        Enabled = true,
+        Invite = "https://discord.gg/3vvDZMG6bk",
+        RememberJoins = true
+    },
+    KeySystem = true,
+    KeySettings = {
+        Title = "Defusal | Key",
+        Subtitle = "Cracked By LCX",
+        Note = "Key: 5262",
+        FileName = "key_13121399",
+        SaveKey = true,
+        GrabKeyFromSite = true,
+        Key = {"5262"}
+    }
 })
 
 ---------------------------------------------------------------------
---\tTABS & SECTIONS --------------------------------------------------
+-- TABS & SECTIONS --------------------------------------------------
 ---------------------------------------------------------------------
 local MainTab   = Window:CreateTab("ESP",   nil)
 local AimBotTab = Window:CreateTab("AimBot", nil)
@@ -48,7 +54,7 @@ RageTab:CreateSection("Main")
 SkinsTab:CreateSection("Main")
 
 ---------------------------------------------------------------------
---\tSTATE VARIABLES --------------------------------------------------
+-- STATE VARIABLES --------------------------------------------------
 ---------------------------------------------------------------------
 local boxESPEnabled   = false
 local boxes           = {}
@@ -59,21 +65,20 @@ local circle          = Drawing.new("Circle")
 local aimbotTarget    = nil
 local spinBotEnabled  = false
 local spinBotConnection = nil
-local speedHackEnabled  = false
+local speedHackEnabled = false
 local hackedSpeed     = 60
 local normalSpeed     = 20
 local tpToMeConnection = nil
 local speedHackConnection = nil
 local savedPosition   = nil
-
--- Fly feature vars
 local flyEnabled      = false
 local flyConnection   = nil
 local bodyVelocity    = nil
 local flySpeed        = 60
+local colorChangeSpeed = 0.1 -- Varsayılan değer
 
 ---------------------------------------------------------------------
---\tSERVICES ---------------------------------------------------------
+-- SERVICES ---------------------------------------------------------
 ---------------------------------------------------------------------
 local Players       = game:GetService("Players")
 local TweenService  = game:GetService("TweenService")
@@ -82,16 +87,15 @@ local UserInputService = game:GetService("UserInputService")
 local camera        = workspace.CurrentCamera
 
 ---------------------------------------------------------------------
---\tESP UTILS --------------------------------------------------------
+-- ESP UTILS --------------------------------------------------------
 ---------------------------------------------------------------------
 local function createBox(character)
     local box = Drawing.new("Square")
     box.Visible   = false
-    box.Color     = Color3.new(1, 1, 1)
+    box.Color     = Color3.new(1, 0, 0)
     box.Thickness = 2
     box.Filled    = false
-    box.Parent    = workspace.Camera
-    box.Character = character
+    table.insert(boxes, {box = box, character = character})
 
     local function updateBox()
         if character and character:FindFirstChild("HumanoidRootPart") then
@@ -110,13 +114,12 @@ local function createBox(character)
     end
 
     RunService.RenderStepped:Connect(updateBox)
-    table.insert(boxes, box)
 end
 
 local function removeBox(character)
-    for i, box in ipairs(boxes) do
-        if box.Character == character then
-            box:Remove()
+    for i, entry in ipairs(boxes) do
+        if entry.character == character then
+            entry.box:Remove()
             table.remove(boxes, i)
             break
         end
@@ -124,6 +127,7 @@ local function removeBox(character)
 end
 
 local function onPlayerAdded(newPlayer)
+    if newPlayer == Players.LocalPlayer then return end
     local character = newPlayer.Character or newPlayer.CharacterAdded:Wait()
     if boxESPEnabled then createBox(character) end
 
@@ -143,59 +147,67 @@ end
 Players.PlayerAdded:Connect(onPlayerAdded)
 Players.PlayerRemoving:Connect(onPlayerRemoving)
 
+-- Karakter yeniden doğduğunda bağlantıları temizle
+Players.LocalPlayer.CharacterAdded:Connect(function()
+    if spinBotConnection then spinBotConnection:Disconnect() spinBotConnection = nil end
+    if speedHackConnection then speedHackConnection:Disconnect() speedHackConnection = nil end
+    if flyConnection then flyConnection:Disconnect() flyConnection = nil end
+    if tpToMeConnection then tpToMeConnection:Disconnect() tpToMeConnection = nil end
+end)
+
 ---------------------------------------------------------------------
---\tUI CONTROLS ------------------------------------------------------
+-- UI CONTROLS ------------------------------------------------------
 ---------------------------------------------------------------------
 -- ESP toggle
 MainTab:CreateButton({
-   Name = "Esp",
-   Callback = function()
-       boxESPEnabled = not boxESPEnabled
-       if boxESPEnabled then
-           for _, player in pairs(Players:GetPlayers()) do
-               if player.Character and player.Character:FindFirstChild("HumanoidRootPart") then
-                   createBox(player.Character)
-               end
-           end
-       else
-           for _, box in pairs(boxes) do box:Remove() end
-           boxes = {}
-       end
-   end,
+    Name = "Esp",
+    Callback = function()
+        boxESPEnabled = not boxESPEnabled
+        if boxESPEnabled then
+            for _, player in pairs(Players:GetPlayers()) do
+                if player ~= Players.LocalPlayer and player.Character and player.Character:FindFirstChild("HumanoidRootPart") then
+                    createBox(player.Character)
+                end
+            end
+        else
+            for _, entry in pairs(boxes) do entry.box:Remove() end
+            boxes = {}
+        end
+    end,
 })
 
 -- Aimbot toggles & slider
 AimBotTab:CreateToggle({
-   Name = "Aimbot",
-   CurrentValue = false,
-   Flag = "aim",
-   Callback = function(Value) aimbotEnabled = Value end,
+    Name = "Aimbot",
+    CurrentValue = false,
+    Flag = "aim",
+    Callback = function(Value) aimbotEnabled = Value end,
 })
 
 AimBotTab:CreateToggle({
-   Name = "Draw Aimbot Circle",
-   CurrentValue = false,
-   Flag = "draw_circle",
-   Callback = function(Value)
-       drawCircleEnabled = Value
-       circle.Visible    = Value
-   end,
+    Name = "Draw Aimbot Circle",
+    CurrentValue = false,
+    Flag = "draw_circle",
+    Callback = function(Value)
+        drawCircleEnabled = Value
+        circle.Visible    = Value
+    end,
 })
 
 AimBotTab:CreateSlider({
-   Name = "Aimbot Circle Size",
-   Range = {5, 40},
-   Increment = 1,
-   Suffix = "Size",
-   CurrentValue = 5,
-   Flag = "circle_size",
-   Callback = function(Value)
-       circleScale   = Value * 10
-       circle.Radius = circleScale
-   end,
+    Name = "Aimbot Circle Size",
+    Range = {5, 40},
+    Increment = 1,
+    Suffix = "Size",
+    CurrentValue = 5,
+    Flag = "circle_size",
+    Callback = function(Value)
+        circleScale   = Value * 10
+        circle.Radius = circleScale
+    end,
 })
 
--- Player utilities --------------------------------------------------
+-- Player utilities
 PlayerTab:CreateButton({
     Name = "Fly Up 5m",
     Callback = function()
@@ -206,94 +218,96 @@ PlayerTab:CreateButton({
 
 -- SpinBot
 PlayerTab:CreateToggle({
-   Name = "SpinBot",
-   CurrentValue = false,
-   Flag = "spinbot",
-   Callback = function(Value)
-       spinBotEnabled = Value
-       local hrp = Players.LocalPlayer.Character and Players.LocalPlayer.Character:FindFirstChild("HumanoidRootPart")
-       if not hrp then return end
-       if spinBotEnabled then
-           spinBotConnection = RunService.Stepped:Connect(function()
-               if spinBotEnabled then hrp.RotVelocity = Vector3.new(0, 150, 0) end
-           end)
-       else
-           if spinBotConnection then spinBotConnection:Disconnect() spinBotConnection = nil end
-           hrp.RotVelocity = Vector3.zero
-       end
-   end,
+    Name = "SpinBot",
+    CurrentValue = false,
+    Flag = "spinbot",
+    Callback = function(Value)
+        spinBotEnabled = Value
+        local hrp = Players.LocalPlayer.Character and Players.LocalPlayer.Character:FindFirstChild("HumanoidRootPart")
+        if not hrp then return end
+        if spinBotEnabled then
+            spinBotConnection = RunService.Stepped:Connect(function()
+                if spinBotEnabled then hrp.RotVelocity = Vector3.new(0, 150, 0) end
+            end)
+        else
+            if spinBotConnection then spinBotConnection:Disconnect() spinBotConnection = nil end
+            hrp.RotVelocity = Vector3.zero
+        end
+    end,
 })
 
 -- Speed Hack
 PlayerTab:CreateToggle({
-   Name = "Speed Hack",
-   CurrentValue = false,
-   Flag = "speed_hack",
-   Callback = function(Value)
-       speedHackEnabled = Value
-       local humanoid = Players.LocalPlayer.Character and Players.LocalPlayer.Character:FindFirstChild("Humanoid")
-       if not humanoid then return end
-       if speedHackEnabled then
-           speedHackConnection = RunService.Stepped:Connect(function()
-               if speedHackEnabled then humanoid.WalkSpeed = hackedSpeed end
-           end)
-       else
-           if speedHackConnection then speedHackConnection:Disconnect() speedHackConnection = nil end
-           humanoid.WalkSpeed = normalSpeed
-       end
-   end,
+    Name = "Speed Hack",
+    CurrentValue = false,
+    Flag = "speed_hack",
+    Callback = function(Value)
+        speedHackEnabled = Value
+        local humanoid = Players.LocalPlayer.Character and Players.LocalPlayer.Character:FindFirstChild("Humanoid")
+        if not humanoid then return end
+        if speedHackEnabled then
+            speedHackConnection = RunService.Stepped:Connect(function()
+                if speedHackEnabled then humanoid.WalkSpeed = hackedSpeed end
+            end)
+        else
+            if speedHackConnection then speedHackConnection:Disconnect() speedHackConnection = nil end
+            humanoid.WalkSpeed = normalSpeed
+        end
+    end,
 })
 
--- NEW: Fly toggle ---------------------------------------------------
+-- Fly toggle
 PlayerTab:CreateToggle({
-   Name = "Fly",
-   CurrentValue = false,
-   Flag = "fly_mode",
-   Callback = function(Value)
-       flyEnabled = Value
-       local character  = Players.LocalPlayer.Character or Players.LocalPlayer.CharacterAdded:Wait()
-       local hrp        = character:WaitForChild("HumanoidRootPart")
+    Name = "Fly",
+    CurrentValue = false,
+    Flag = "fly_mode",
+    Callback = function(Value)
+        flyEnabled = Value
+        local character = Players.LocalPlayer.Character
+        if not character then return end
+        local hrp = character:FindFirstChild("HumanoidRootPart")
+        if not hrp then return end
 
-       if flyEnabled then
-           bodyVelocity = Instance.new("BodyVelocity")
-           bodyVelocity.MaxForce = Vector3.new(1e5, 1e5, 1e5)
-           bodyVelocity.P = 1e4
-           bodyVelocity.Velocity = Vector3.zero
-           bodyVelocity.Parent = hrp
+        if flyEnabled then
+            bodyVelocity = Instance.new("BodyVelocity")
+            bodyVelocity.MaxForce = Vector3.new(1e5, 1e5, 1e5)
+            bodyVelocity.P = 1e4
+            bodyVelocity.Velocity = Vector3.zero
+            bodyVelocity.Parent = hrp
 
-           flyConnection = RunService.Stepped:Connect(function()
-               local moveDir = Vector3.zero
-               if UserInputService:IsKeyDown(Enum.KeyCode.W) then
-                   moveDir += camera.CFrame.LookVector
-               end
-               if UserInputService:IsKeyDown(Enum.KeyCode.S) then
-                   moveDir -= camera.CFrame.LookVector
-               end
-               if UserInputService:IsKeyDown(Enum.KeyCode.A) then
-                   moveDir -= camera.CFrame.RightVector
-               end
-               if UserInputService:IsKeyDown(Enum.KeyCode.D) then
-                   moveDir += camera.CFrame.RightVector
-               end
-               if UserInputService:IsKeyDown(Enum.KeyCode.Space) then
-                   moveDir += Vector3.new(0,1,0)
-               end
-               if UserInputService:IsKeyDown(Enum.KeyCode.LeftControl) then
-                   moveDir -= Vector3.new(0,1,0)
-               end
-               if moveDir.Magnitude > 0 then
-                   moveDir = moveDir.Unit * flySpeed
-               end
-               bodyVelocity.Velocity = moveDir
-           end)
-       else
-           if flyConnection then flyConnection:Disconnect() flyConnection = nil end
-           if bodyVelocity then bodyVelocity:Destroy() bodyVelocity = nil end
-       end
-   end,
+            flyConnection = RunService.Stepped:Connect(function()
+                local moveDir = Vector3.zero
+                if UserInputService:IsKeyDown(Enum.KeyCode.W) then
+                    moveDir += camera.CFrame.LookVector
+                end
+                if UserInputService:IsKeyDown(Enum.KeyCode.S) then
+                    moveDir -= camera.CFrame.LookVector
+                end
+                if UserInputService:IsKeyDown(Enum.KeyCode.A) then
+                    moveDir -= camera.CFrame.RightVector
+                end
+                if UserInputService:IsKeyDown(Enum.KeyCode.D) then
+                    moveDir += camera.CFrame.RightVector
+                end
+                if UserInputService:IsKeyDown(Enum.KeyCode.Space) then
+                    moveDir += Vector3.new(0, 1, 0)
+                end
+                if UserInputService:IsKeyDown(Enum.KeyCode.LeftControl) then
+                    moveDir -= Vector3.new(0, 1, 0)
+                end
+                if moveDir.Magnitude > 0 then
+                    moveDir = moveDir.Unit * flySpeed
+                end
+                bodyVelocity.Velocity = moveDir
+            end)
+        else
+            if flyConnection then flyConnection:Disconnect() flyConnection = nil end
+            if bodyVelocity then bodyVelocity:Destroy() bodyVelocity = nil end
+        end
+    end,
 })
 
--- Save & Teleport ---------------------------------------------------
+-- Save & Teleport
 PlayerTab:CreateButton({
     Name = "Save Position",
     Callback = function()
@@ -310,29 +324,29 @@ PlayerTab:CreateButton({
     end,
 })
 
--- Rage: Tp To Me ----------------------------------------------------
+-- Rage: Tp To Me
 RageTab:CreateToggle({
-   Name = "Tp To Me",
-   CurrentValue = false,
-   Flag = "tp_to_me",
-   Callback = function(Value)
-       if Value then
-           tpToMeConnection = RunService.Heartbeat:Connect(function()
-               local localPos = Players.LocalPlayer.Character and Players.LocalPlayer.Character:FindFirstChild("HumanoidRootPart") and Players.LocalPlayer.Character.HumanoidRootPart.Position
-               if not localPos then return end
-               for _, targetPlayer in pairs(Players:GetPlayers()) do
-                   if targetPlayer ~= Players.LocalPlayer and targetPlayer.Character and targetPlayer.Character:FindFirstChild("HumanoidRootPart") then
-                       targetPlayer.Character.HumanoidRootPart.CFrame = CFrame.new(localPos)
-                   end
-               end
-           end)
-       else
-           if tpToMeConnection then tpToMeConnection:Disconnect() tpToMeConnection = nil end
-       end
-   end,
+    Name = "Tp To Me",
+    CurrentValue = false,
+    Flag = "tp_to_me",
+    Callback = function(Value)
+        if Value then
+            tpToMeConnection = RunService.Heartbeat:Connect(function()
+                local localPos = Players.LocalPlayer.Character and Players.LocalPlayer.Character:FindFirstChild("HumanoidRootPart") and Players.LocalPlayer.Character.HumanoidRootPart.Position
+                if not localPos then return end
+                for _, targetPlayer in pairs(Players:GetPlayers()) do
+                    if targetPlayer ~= Players.LocalPlayer and targetPlayer.Character and targetPlayer.Character:FindFirstChild("HumanoidRootPart") then
+                        targetPlayer.Character.HumanoidRootPart.CFrame = CFrame.new(localPos)
+                    end
+                end
+            end)
+        else
+            if tpToMeConnection then tpToMeConnection:Disconnect() tpToMeConnection = nil end
+        end
+    end,
 })
 
--- Skins: Rainbow Hands ---------------------------------------------
+-- Skins: Rainbow Hands
 SkinsTab:CreateToggle({
     Name = "Rainbow Hands",
     CurrentValue = false,
@@ -345,13 +359,15 @@ SkinsTab:CreateToggle({
             Color3.fromRGB(148, 0, 211)
         }
         local colorIndex = 1
-        local nextTick   = 0
+        local nextTick = 0
         local function changeColor()
-            local leftArm = workspace.Camera:FindFirstChild("Arms") and workspace.Camera.Arms:FindFirstChild("CSSArms") and workspace.Camera.Arms.CSSArms:FindFirstChild("Left Arm")
-            local rightArm = workspace.Camera:FindFirstChild("Arms") and workspace.Camera.Arms:FindFirstChild("CSSArms") and workspace.Camera.Arms.CSSArms:FindFirstChild("Right Arm")
+            local arms = workspace.Camera:FindFirstChild("Arms") and workspace.Camera.Arms:FindFirstChild("CSSArms")
+            if not arms then return end
+            local leftArm = arms:FindFirstChild("Left Arm")
+            local rightArm = arms:FindFirstChild("Right Arm")
             if leftArm and rightArm then
                 colorIndex = (colorIndex % #colors) + 1
-                leftArm.Color  = colors[colorIndex]
+                leftArm.Color = colors[colorIndex]
                 rightArm.Color = colors[colorIndex]
             end
         end
@@ -360,15 +376,17 @@ SkinsTab:CreateToggle({
             RunService.Heartbeat:Connect(function()
                 if rainbowHandsEnabled and tick() >= nextTick then
                     changeColor()
-                    nextTick = tick() + (colorChangeSpeed or 0.1)
+                    nextTick = tick() + colorChangeSpeed
                 end
             end)
         else
-            local leftArm = workspace.Camera:FindFirstChild("Arms") and workspace.Camera.Arms:FindFirstChild("CSSArms") and workspace.Camera.Arms.CSSArms:FindFirstChild("Left Arm")
-            local rightArm = workspace.Camera:FindFirstChild("Arms") and workspace.Camera.Arms:FindFirstChild("CSSArms") and workspace.Camera.Arms.CSSArms:FindFirstChild("Right Arm")
+            local arms = workspace.Camera:FindFirstChild("Arms") and workspace.Camera.Arms:FindFirstChild("CSSArms")
+            if not arms then return end
+            local leftArm = arms:FindFirstChild("Left Arm")
+            local rightArm = arms:FindFirstChild("Right Arm")
             if leftArm and rightArm then
-                leftArm.Color  = Color3.new(1,1,1)
-                rightArm.Color = Color3.new(1,1,1)
+                leftArm.Color = Color3.new(1, 1, 1)
+                rightArm.Color = Color3.new(1, 1, 1)
             end
         end
     end,
@@ -385,9 +403,8 @@ SkinsTab:CreateSlider({
 })
 
 ---------------------------------------------------------------------
---\tAIMBOT LOGIC -----------------------------------------------------
+-- AIMBOT LOGIC -----------------------------------------------------
 ---------------------------------------------------------------------
-
 circle.Visible   = false
 circle.Color     = Color3.fromRGB(255, 0, 230)
 circle.Thickness = 2
@@ -413,8 +430,10 @@ UserInputService.InputBegan:Connect(function(input, gp)
             end
         end
         if closest then
-            aimbotTarget = closest.Character.Head
-            closest.Character.Humanoid.Died:Connect(onTargetDied)
+            aimbotTarget = closest.Character:FindFirstChild("Head")
+            if aimbotTarget then
+                closest.Character.Humanoid.Died:Connect(onTargetDied)
+            end
         end
     end
 end)
