@@ -3,10 +3,10 @@ if game.PlaceId == 79393329652220 then
 local Rayfield = loadstring(game:HttpGet('https://sirius.menu/rayfield'))()
 
 local Window = Rayfield:CreateWindow({
-   Name = "FemWare || ✂️Defusal FPS💣[TESTING]",
+   Name = "LCX TEAM || Defusal FPS",
    Icon = 0,
-   LoadingTitle = "FemWare Management",
-   LoadingSubtitle = "by chinjungxx",
+   LoadingTitle = "LCX TEAM HACK",
+   LoadingSubtitle = "by LCX9.lucidcreatr,
    Theme = "Serenity",
    DisableRayfieldPrompts = false,
    DisableBuildWarnings = false,
@@ -23,7 +23,7 @@ local Window = Rayfield:CreateWindow({
    KeySystem = true,
    KeySettings = {
       Title = "Defusal | Key",
-      Subtitle = "Cracked By FemWare",
+      Subtitle = "crack by lcx",
       Note = "Key: 5262",
       FileName = "key_13121399",
       SaveKey = true,
@@ -87,7 +87,7 @@ local camera        = workspace.CurrentCamera
 local function createBox(character)
     local box = Drawing.new("Square")
     box.Visible   = false
-    box.Color     = Color3.new(1, 0, 0)
+    box.Color     = Color3.new(1, 1, 1)
     box.Thickness = 2
     box.Filled    = false
     box.Parent    = workspace.Camera
