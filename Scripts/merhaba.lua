@@ -4,7 +4,7 @@ local success, Rayfield = pcall(function()
     return loadstring(game:HttpGet('https://sirius.menu/rayfield'))()
 end)
 if not success then
-    warn("Rayfield kütüphanesi yüklenemedi: " .. tostring(Rayfield))
+    warn("LCXTEAM kütüphanesi yüklenemedi: " .. tostring(LCXTEAM))
     return
 end
 
@@ -12,7 +12,7 @@ local Window = Rayfield:CreateWindow({
     Name = "LCX TEAM || Defusal FPS",
     Icon = 0,
     LoadingTitle = "LCX Management",
-    LoadingSubtitle = "by LCX9.Lucidcreatr",
+    LoadingSubtitle = "by Lucidcreatr",
     Theme = "Serenity",
     DisableRayfieldPrompts = false,
     DisableBuildWarnings = false,
@@ -76,6 +76,10 @@ local flyConnection   = nil
 local bodyVelocity    = nil
 local flySpeed        = 60
 local colorChangeSpeed = 0.1 -- Varsayılan değer
+local bigHitboxEnabled = false -- Yeni: Hitbox büyütme için durum değişkeni
+local originalHeadSizes = {} -- Yeni: Orijinal kafa boyutlarını saklamak için
+local bunnyHopEnabled = false -- Yeni: Bunny hop için durum değişkeni
+local bunnyHopConnection = nil -- Yeni: Bunny hop bağlantısı
 
 ---------------------------------------------------------------------
 -- SERVICES ---------------------------------------------------------
@@ -130,14 +134,37 @@ local function onPlayerAdded(newPlayer)
     if newPlayer == Players.LocalPlayer then return end
     local character = newPlayer.Character or newPlayer.CharacterAdded:Wait()
     if boxESPEnabled then createBox(character) end
+    if bigHitboxEnabled then
+        local head = character:FindFirstChild("Head")
+        if head then
+            originalHeadSizes[character] = head.Size
+            head.Size = Vector3.new(5, 5, 5) -- Hitbox boyutunu büyüt
+        end
+    end
 
     newPlayer.CharacterAdded:Connect(function(newCharacter)
         if boxESPEnabled then createBox(newCharacter) end
+        if bigHitboxEnabled then
+            local head = newCharacter:FindFirstChild("Head")
+            if head then
+                originalHeadSizes[newCharacter] = head.Size
+                head.Size = Vector3.new(5, 5, 5) -- Yeni karakter için hitbox büyüt
+            end
+        end
     end)
 end
 
 local function onPlayerRemoving(player)
-    if player.Character then removeBox(player.Character) end
+    if player.Character then
+        removeBox(player.Character)
+        if bigHitboxEnabled and originalHeadSizes[player.Character] then
+            local head = player.Character:FindFirstChild("Head")
+            if head then
+                head.Size = originalHeadSizes[player.Character]
+            end
+            originalHeadSizes[player.Character] = nil
+        end
+    end
 end
 
 for _, player in ipairs(Players:GetPlayers()) do
@@ -153,6 +180,7 @@ Players.LocalPlayer.CharacterAdded:Connect(function()
     if speedHackConnection then speedHackConnection:Disconnect() speedHackConnection = nil end
     if flyConnection then flyConnection:Disconnect() flyConnection = nil end
     if tpToMeConnection then tpToMeConnection:Disconnect() tpToMeConnection = nil end
+    if bunnyHopConnection then bunnyHopConnection:Disconnect() bunnyHopConnection = nil end
 end)
 
 ---------------------------------------------------------------------
@@ -307,6 +335,29 @@ PlayerTab:CreateToggle({
     end,
 })
 
+-- Bunny Hop toggle
+PlayerTab:CreateToggle({
+    Name = "Bunny Hop",
+    CurrentValue = false,
+    Flag = "bunny_hop",
+    Callback = function(Value)
+        bunnyHopEnabled = Value
+        if bunnyHopEnabled then
+            bunnyHopConnection = UserInputService.InputBegan:Connect(function(input, gameProcessed)
+                if gameProcessed then return end
+                if input.KeyCode == Enum.KeyCode.Space then
+                    local humanoid = Players.LocalPlayer.Character and Players.LocalPlayer.Character:FindFirstChild("Humanoid")
+                    if humanoid and humanoid.FloorMaterial ~= Enum.Material.Air then
+                        humanoid.Jump = true
+                    end
+                end
+            end)
+        else
+            if bunnyHopConnection then bunnyHopConnection:Disconnect() bunnyHopConnection = nil end
+        end
+    end,
+})
+
 -- Save & Teleport
 PlayerTab:CreateButton({
     Name = "Save Position",
@@ -342,6 +393,32 @@ RageTab:CreateToggle({
             end)
         else
             if tpToMeConnection then tpToMeConnection:Disconnect() tpToMeConnection = nil end
+        end
+    end,
+})
+
+-- Rage: Big Hitbox
+RageTab:CreateToggle({
+    Name = "Big Hitbox",
+    CurrentValue = false,
+    Flag = "big_hitbox",
+    Callback = function(Value)
+        bigHitboxEnabled = Value
+        for _, player in pairs(Players:GetPlayers()) do
+            if player ~= Players.LocalPlayer and player.Character and player.Character:FindFirstChild("Head") then
+                local head = player.Character.Head
+                if bigHitboxEnabled then
+                    if not originalHeadSizes[player.Character] then
+                        originalHeadSizes[player.Character] = head.Size
+                    end
+                    head.Size = Vector3.new(10, 10, 10) -- Hitbox boyutunu büyüt
+                else
+                    if originalHeadSizes[player.Character] then
+                        head.Size = originalHeadSizes[player.Character]
+                        originalHeadSizes[player.Character] = nil
+                    end
+                end
+            end
         end
     end,
 })
