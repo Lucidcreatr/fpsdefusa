@@ -4,15 +4,15 @@ local success, Rayfield = pcall(function()
     return loadstring(game:HttpGet('https://sirius.menu/rayfield'))()
 end)
 if not success then
-    warn("Rayfield kütüphanesi yüklenemedi: " .. tostring(Rayfield))
+    warn("Rayfield kütüphanesi yüklenemedi: " .. tostring(LCX))
     return
 end
 
 local Window = Rayfield:CreateWindow({
-    Name = "FemWare || ✂️Defusal FPS💣[TESTING]",
+    Name = "LCX TEAM | Defusal FPS",
     Icon = 0,
-    LoadingTitle = "FemWare Management",
-    LoadingSubtitle = "by chinjungxx",
+    LoadingTitle = "LCX Team Creator",
+    LoadingSubtitle = "By Lucid",
     Theme = "Serenity",
     DisableRayfieldPrompts = false,
     DisableBuildWarnings = false,
@@ -23,13 +23,13 @@ local Window = Rayfield:CreateWindow({
     },
     Discord = {
         Enabled = true,
-        Invite = "https://discord.gg/3vvDZMG6bk",
+        Invite = "Discord.gg/LCXteam",
         RememberJoins = true
     },
     KeySystem = true,
     KeySettings = {
         Title = "Defusal | Key",
-        Subtitle = "Cracked By FemWare",
+        Subtitle = "Cracked By LcX9 TEAM",
         Note = "Key: 5262",
         FileName = "key_13121399",
         SaveKey = true,
