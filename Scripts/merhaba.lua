@@ -1,10 +1,10 @@
-if game.PlaceId == 79393329652220 then -- GERÇEK PLACEID İLE DEĞİŞTİRİN
+if game.PlaceId == 1234567890 then -- GERÇEK PLACEID İLE DEĞİŞTİRİN
 
 local success, Rayfield = pcall(function()
     return loadstring(game:HttpGet('https://sirius.menu/rayfield'))()
 end)
 if not success then
-    warn("LCXTEAM kütüphanesi yüklenemedi: " .. tostring(LCXTEAM))
+    warn("Rayfield kütüphanesi yüklenemedi: " .. tostring(Rayfield))
     return
 end
 
@@ -76,10 +76,11 @@ local flyConnection   = nil
 local bodyVelocity    = nil
 local flySpeed        = 60
 local colorChangeSpeed = 0.1 -- Varsayılan değer
-local bigHitboxEnabled = false -- Yeni: Hitbox büyütme için durum değişkeni
-local originalHeadSizes = {} -- Yeni: Orijinal kafa boyutlarını saklamak için
-local bunnyHopEnabled = false -- Yeni: Bunny hop için durum değişkeni
-local bunnyHopConnection = nil -- Yeni: Bunny hop bağlantısı
+local bigHitboxEnabled = false -- Hitbox büyütme için durum değişkeni
+local originalHeadSizes = {} -- Orijinal kafa boyutlarını saklamak için
+local bunnyHopEnabled = false -- Bunny hop için durum değişkeni
+local bunnyHopConnection = nil -- Bunny hop bağlantısı
+local rainbowHandsConnection = nil -- Rainbow Hands bağlantısı
 
 ---------------------------------------------------------------------
 -- SERVICES ---------------------------------------------------------
@@ -181,6 +182,7 @@ Players.LocalPlayer.CharacterAdded:Connect(function()
     if flyConnection then flyConnection:Disconnect() flyConnection = nil end
     if tpToMeConnection then tpToMeConnection:Disconnect() tpToMeConnection = nil end
     if bunnyHopConnection then bunnyHopConnection:Disconnect() bunnyHopConnection = nil end
+    if rainbowHandsConnection then rainbowHandsConnection:Disconnect() rainbowHandsConnection = nil end
 end)
 
 ---------------------------------------------------------------------
@@ -267,7 +269,7 @@ PlayerTab:CreateToggle({
 -- Speed Hack
 PlayerTab:CreateToggle({
     Name = "Speed Hack",
-    CurrentValue = false,
+    CurrentValueoubted = false,
     Flag = "speed_hack",
     Callback = function(Value)
         speedHackEnabled = Value
@@ -314,7 +316,8 @@ PlayerTab:CreateToggle({
                 if UserInputService:IsKeyDown(Enum.KeyCode.A) then
                     moveDir -= camera.CFrame.RightVector
                 end
-                if UserInputService:IsKeyDown(Enum.KeyCode.D) then
+                if UserInputService:IsKeyDown(Enum.KeyCode.D übersetzt
+System: D) then
                     moveDir += camera.CFrame.RightVector
                 end
                 if UserInputService:IsKeyDown(Enum.KeyCode.Space) then
@@ -382,7 +385,7 @@ RageTab:CreateToggle({
     Flag = "tp_to_me",
     Callback = function(Value)
         if Value then
-            tpToMeConnection = RunService.Heartbeat:Connect(function()
+            tpToMeConnection = RunService.Heartbeat:Connect(function(deltaTime)
                 local localPos = Players.LocalPlayer.Character and Players.LocalPlayer.Character:FindFirstChild("HumanoidRootPart") and Players.LocalPlayer.Character.HumanoidRootPart.Position
                 if not localPos then return end
                 for _, targetPlayer in pairs(Players:GetPlayers()) do
@@ -411,7 +414,7 @@ RageTab:CreateToggle({
                     if not originalHeadSizes[player.Character] then
                         originalHeadSizes[player.Character] = head.Size
                     end
-                    head.Size = Vector3.new(10, 10, 10) -- Hitbox boyutunu büyüt
+                    head.Size = Vector3.new(30, 30, 30) -- Daha güvenli bir boyut
                 else
                     if originalHeadSizes[player.Character] then
                         head.Size = originalHeadSizes[player.Character]
@@ -450,13 +453,14 @@ SkinsTab:CreateToggle({
         end
         if rainbowHandsEnabled then
             nextTick = tick()
-            RunService.Heartbeat:Connect(function()
+            rainbowHandsConnection = RunService.Heartbeat:Connect(function()
                 if rainbowHandsEnabled and tick() >= nextTick then
                     changeColor()
                     nextTick = tick() + colorChangeSpeed
                 end
             end)
         else
+            if rainbowHandsConnection then rainbowHandsConnection:Disconnect() rainbowHandsConnection = nil end
             local arms = workspace.Camera:FindFirstChild("Arms") and workspace.Camera.Arms:FindFirstChild("CSSArms")
             if not arms then return end
             local leftArm = arms:FindFirstChild("Left Arm")
