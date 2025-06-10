@@ -1,7 +1,7 @@
-if game.PlaceId == 79393329652220 then -- GERÇEK PLACEID İLE DEĞİŞTİRİN
+if game.PlaceId == 79393329652220 then
 
 local success, Rayfield = pcall(function()
-    return loadstring(game:HttpGet('https://sirius.menu/rayfield'))()
+    return loadstring(game:HttpGet('https://raw.githubusercontent.com/SiriusSoftwareLtd/Rayfield/main/source.lua'))()
 end)
 if not success then
     warn("Rayfield kütüphanesi yüklenemedi: " .. tostring(Rayfield))
@@ -75,12 +75,12 @@ local flyEnabled      = false
 local flyConnection   = nil
 local bodyVelocity    = nil
 local flySpeed        = 60
-local colorChangeSpeed = 0.1 -- Varsayılan değer
-local bigHitboxEnabled = false -- Hitbox büyütme için durum değişkeni
-local originalHeadSizes = {} -- Orijinal kafa boyutlarını saklamak için
-local bunnyHopEnabled = false -- Bunny hop için durum değişkeni
-local bunnyHopConnection = nil -- Bunny hop bağlantısı
-local rainbowHandsConnection = nil -- Rainbow Hands bağlantısı
+local colorChangeSpeed = 0.1
+local bigHitboxEnabled = false
+local originalHeadSizes = {}
+local bunnyHopEnabled = false
+local bunnyHopConnection = nil
+local rainbowHandsConnection = nil
 
 ---------------------------------------------------------------------
 -- SERVICES ---------------------------------------------------------
@@ -95,37 +95,44 @@ local camera        = workspace.CurrentCamera
 -- ESP UTILS --------------------------------------------------------
 ---------------------------------------------------------------------
 local function createBox(character)
-    local box = Drawing.new("Square")
-    box.Visible   = false
-    box.Color     = Color3.new(1, 0, 0)
-    box.Thickness = 2
-    box.Filled    = false
-    table.insert(boxes, {box = box, character = character})
+    local success, result = pcall(function()
+        local box = Drawing.new("Square")
+        box.Visible   = false
+        box.Color     = Color3.new(1, 0, 0)
+        box.Thickness = 2
+        box.Filled    = false
+        table.insert(boxes, {box = box, character = character})
 
-    local function updateBox()
-        if character and character:FindFirstChild("HumanoidRootPart") then
-            local vector, onScreen = workspace.CurrentCamera:WorldToViewportPoint(character.HumanoidRootPart.Position)
-            if onScreen then
-                local size = 2000 / vector.Z
-                box.Size     = Vector2.new(size, size)
-                box.Position = Vector2.new(vector.X - size / 2, vector.Y - size / 2)
-                box.Visible  = true
+        local function updateBox()
+            if character and character:FindFirstChild("HumanoidRootPart") then
+                local vector, onScreen = workspace.CurrentCamera:WorldToViewportPoint(character.HumanoidRootPart.Position)
+                if onScreen then
+                    local size = 2000 / vector.Z
+                    box.Size     = Vector2.new(size, size)
+                    box.Position = Vector2.new(vector.X - size / 2, vector.Y - size / 2)
+                    box.Visible  = true
+                else
+                    box.Visible = false
+                end
             else
                 box.Visible = false
             end
-        else
-            box.Visible = false
         end
-    end
 
-    RunService.RenderStepped:Connect(updateBox)
+        RunService.RenderStepped:Connect(updateBox)
+    end)
+    if not success then
+        warn("ESP kutusu oluşturulurken hata: " .. tostring(result))
+    end
 end
 
 local function removeBox(character)
     for i, entry in ipairs(boxes) do
         if entry.character == character then
-            entry.box:Remove()
-            table.remove(boxes, i)
+            pcall(function()
+                entry.box:Remove()
+                table.remove(boxes, i)
+            end)
             break
         end
     end
@@ -139,7 +146,7 @@ local function onPlayerAdded(newPlayer)
         local head = character:FindFirstChild("Head")
         if head then
             originalHeadSizes[character] = head.Size
-            head.Size = Vector3.new(5, 5, 5) -- Hitbox boyutunu büyüt
+            head.Size = Vector3.new(5, 5, 5)
         end
     end
 
@@ -149,7 +156,7 @@ local function onPlayerAdded(newPlayer)
             local head = newCharacter:FindFirstChild("Head")
             if head then
                 originalHeadSizes[newCharacter] = head.Size
-                head.Size = Vector3.new(5, 5, 5) -- Yeni karakter için hitbox büyüt
+                head.Size = Vector3.new(5, 5, 5)
             end
         end
     end)
@@ -177,18 +184,17 @@ Players.PlayerRemoving:Connect(onPlayerRemoving)
 
 -- Karakter yeniden doğduğunda bağlantıları temizle
 Players.LocalPlayer.CharacterAdded:Connect(function()
-    if spinBotConnection then spinBotConnection:Disconnect() spinBotConnection = nil end
-    if speedHackConnection then speedHackConnection:Disconnect() speedHackConnection = nil end
-    if flyConnection then flyConnection:Disconnect() flyConnection = nil end
-    if tpToMeConnection then tpToMeConnection:Disconnect() tpToMeConnection = nil end
-    if bunnyHopConnection then bunnyHopConnection:Disconnect() bunnyHopConnection = nil end
-    if rainbowHandsConnection then rainbowHandsConnection:Disconnect() rainbowHandsConnection = nil end
+    if spinBotConnection then pcall(function() spinBotConnection:Disconnect() end) spinBotConnection = nil end
+    if speedHackConnection then pcall(function() speedHackConnection:Disconnect() end) speedHackConnection = nil end
+    if flyConnection then pcall(function() flyConnection:Disconnect() end) flyConnection = nil end
+    if tpToMeConnection then pcall(function() tpToMeConnection:Disconnect() end) tpToMeConnection = nil end
+    if bunnyHopConnection then pcall(function() bunnyHopConnection:Disconnect() end) bunnyHopConnection = nil end
+    if rainbowHandsConnection then pcall(function() rainbowHandsConnection:Disconnect() end) rainbowHandsConnection = nil end
 end)
 
 ---------------------------------------------------------------------
 -- UI CONTROLS ------------------------------------------------------
 ---------------------------------------------------------------------
--- ESP toggle
 MainTab:CreateButton({
     Name = "Esp",
     Callback = function()
@@ -200,13 +206,12 @@ MainTab:CreateButton({
                 end
             end
         else
-            for _, entry in pairs(boxes) do entry.box:Remove() end
+            for _, entry in pairs(boxes) do pcall(function() entry.box:Remove() end) end
             boxes = {}
         end
     end,
 })
 
--- Aimbot toggles & slider
 AimBotTab:CreateToggle({
     Name = "Aimbot",
     CurrentValue = false,
@@ -237,7 +242,6 @@ AimBotTab:CreateSlider({
     end,
 })
 
--- Player utilities
 PlayerTab:CreateButton({
     Name = "Fly Up 5m",
     Callback = function()
@@ -246,7 +250,6 @@ PlayerTab:CreateButton({
     end,
 })
 
--- SpinBot
 PlayerTab:CreateToggle({
     Name = "SpinBot",
     CurrentValue = false,
@@ -260,16 +263,15 @@ PlayerTab:CreateToggle({
                 if spinBotEnabled then hrp.RotVelocity = Vector3.new(0, 150, 0) end
             end)
         else
-            if spinBotConnection then spinBotConnection:Disconnect() spinBotConnection = nil end
+            if spinBotConnection then pcall(function() spinBotConnection:Disconnect() end) spinBotConnection = nil end
             hrp.RotVelocity = Vector3.zero
         end
     end,
 })
 
--- Speed Hack
 PlayerTab:CreateToggle({
     Name = "Speed Hack",
-    CurrentValueoubted = false,
+    CurrentValue = false,
     Flag = "speed_hack",
     Callback = function(Value)
         speedHackEnabled = Value
@@ -280,13 +282,12 @@ PlayerTab:CreateToggle({
                 if speedHackEnabled then humanoid.WalkSpeed = hackedSpeed end
             end)
         else
-            if speedHackConnection then speedHackConnection:Disconnect() speedHackConnection = nil end
+            if speedHackConnection then pcall(function() speedHackConnection:Disconnect() end) speedHackConnection = nil end
             humanoid.WalkSpeed = normalSpeed
         end
     end,
 })
 
--- Fly toggle
 PlayerTab:CreateToggle({
     Name = "Fly",
     CurrentValue = false,
@@ -316,8 +317,7 @@ PlayerTab:CreateToggle({
                 if UserInputService:IsKeyDown(Enum.KeyCode.A) then
                     moveDir -= camera.CFrame.RightVector
                 end
-                if UserInputService:IsKeyDown(Enum.KeyCode.D übersetzt
-System: D) then
+                if UserInputService:IsKeyDown(Enum.KeyCode.D) then
                     moveDir += camera.CFrame.RightVector
                 end
                 if UserInputService:IsKeyDown(Enum.KeyCode.Space) then
@@ -332,13 +332,12 @@ System: D) then
                 bodyVelocity.Velocity = moveDir
             end)
         else
-            if flyConnection then flyConnection:Disconnect() flyConnection = nil end
-            if bodyVelocity then bodyVelocity:Destroy() bodyVelocity = nil end
+            if flyConnection then pcall(function() flyConnection:Disconnect() end) flyConnection = nil end
+            if bodyVelocity then pcall(function() bodyVelocity:Destroy() end) bodyVelocity = nil end
         end
     end,
 })
 
--- Bunny Hop toggle
 PlayerTab:CreateToggle({
     Name = "Bunny Hop",
     CurrentValue = false,
@@ -356,12 +355,11 @@ PlayerTab:CreateToggle({
                 end
             end)
         else
-            if bunnyHopConnection then bunnyHopConnection:Disconnect() bunnyHopConnection = nil end
+            if bunnyHopConnection then pcall(function() bunnyHopConnection:Disconnect() end) bunnyHopConnection = nil end
         end
     end,
 })
 
--- Save & Teleport
 PlayerTab:CreateButton({
     Name = "Save Position",
     Callback = function()
@@ -378,14 +376,16 @@ PlayerTab:CreateButton({
     end,
 })
 
--- Rage: Tp To Me
 RageTab:CreateToggle({
     Name = "Tp To Me",
     CurrentValue = false,
     Flag = "tp_to_me",
     Callback = function(Value)
         if Value then
-            tpToMeConnection = RunService.Heartbeat:Connect(function(deltaTime)
+            local lastUpdate = tick()
+            tpToMeConnection = RunService.Heartbeat:Connect(function()
+                if tick() - lastUpdate < 0.1 then return end -- 0.1 saniye gecikme
+                lastUpdate = tick()
                 local localPos = Players.LocalPlayer.Character and Players.LocalPlayer.Character:FindFirstChild("HumanoidRootPart") and Players.LocalPlayer.Character.HumanoidRootPart.Position
                 if not localPos then return end
                 for _, targetPlayer in pairs(Players:GetPlayers()) do
@@ -395,12 +395,11 @@ RageTab:CreateToggle({
                 end
             end)
         else
-            if tpToMeConnection then tpToMeConnection:Disconnect() tpToMeConnection = nil end
+            if tpToMeConnection then pcall(function() tpToMeConnection:Disconnect() end) tpToMeConnection = nil end
         end
     end,
 })
 
--- Rage: Big Hitbox
 RageTab:CreateToggle({
     Name = "Big Hitbox",
     CurrentValue = false,
@@ -414,7 +413,7 @@ RageTab:CreateToggle({
                     if not originalHeadSizes[player.Character] then
                         originalHeadSizes[player.Character] = head.Size
                     end
-                    head.Size = Vector3.new(30, 30, 30) -- Daha güvenli bir boyut
+                    head.Size = Vector3.new(5, 5, 5)
                 else
                     if originalHeadSizes[player.Character] then
                         head.Size = originalHeadSizes[player.Character]
@@ -426,7 +425,6 @@ RageTab:CreateToggle({
     end,
 })
 
--- Skins: Rainbow Hands
 SkinsTab:CreateToggle({
     Name = "Rainbow Hands",
     CurrentValue = false,
@@ -460,7 +458,7 @@ SkinsTab:CreateToggle({
                 end
             end)
         else
-            if rainbowHandsConnection then rainbowHandsConnection:Disconnect() rainbowHandsConnection = nil end
+            if rainbowHandsConnection then pcall(function() rainbowHandsConnection:Disconnect() end) rainbowHandsConnection = nil end
             local arms = workspace.Camera:FindFirstChild("Arms") and workspace.Camera.Arms:FindFirstChild("CSSArms")
             if not arms then return end
             local leftArm = arms:FindFirstChild("Left Arm")
@@ -544,5 +542,3 @@ RunService.RenderStepped:Connect(function()
         circle.Position = Vector2.new(m.X, m.Y)
     end
 end)
-
-end
