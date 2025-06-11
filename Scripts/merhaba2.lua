@@ -415,7 +415,7 @@ RageTab:CreateToggle({
 
 AimBotTab:CreateSlider({
     Name = "Hitbox Boyutu",
-    Range = {1, 500},
+    Range = {1, 350},
     Increment = 1,
     CurrentValue = state.hitboxSize,
     Callback = function(v)
