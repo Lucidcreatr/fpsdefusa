@@ -1,4 +1,4 @@
-if game.PlaceId == 1234567890 then -- GERÇEK PLACEID İLE DEĞİŞTİRİN (Örnek: Hedef oyunun PlaceId'sini buraya yazın)
+if game.PlaceId == 79393329652220  then -- GERÇEK PLACEID İLE DEĞİŞTİRİN (Örnek: Hedef oyunun PlaceId'sini buraya yazın)
 
 local success, Rayfield = pcall(function()
     return loadstring(game:HttpGet('https://sirius.menu/rayfield'))()
