@@ -251,7 +251,7 @@ AimBotTab:CreateToggle({
 
 AimBotTab:CreateSlider({
     Name = "Aimbot Circle Size",
-    Range = {5, 40},
+    Range = {5, 50},
     Increment = 1,
     Suffix = "Size",
     CurrentValue = 5,
@@ -273,33 +273,9 @@ local function applyChams(char)
     end
 end
 
-RageTab:CreateToggle({
-    Name = "Chams",
-    CurrentValue = false,
-    Callback = function(v)
-        chams = v
-        for _, plr in pairs(Players:GetPlayers()) do
-            if plr ~= LP and plr.Character then
-                applyChams(plr.Character)
-            end
-        end
-    end
-})
 
 local antiFx = false
 
-RageTab:CreateToggle({
-    Name = "Anti Flash/Smoke",
-    CurrentValue = false,
-    Callback = function(v)
-        antiFx = v
-        for _, obj in pairs(workspace:GetDescendants()) do
-            if obj:IsA("ParticleEmitter") or obj:IsA("Smoke") then
-                obj.Enabled = not v
-            end
-        end
-    end
-})
 
 local autoTask = false
 
@@ -487,55 +463,6 @@ PlayerTab:CreateButton({
     end,
 })
 
-local killauraEnabled = false
-local killauraRange = 20
-local killauraESP = {}
-local function createAuraHalo(target)
-    local halo = Drawing.new("Circle")
-    halo.Radius = 60
-    halo.NumSides = 30
-    halo.Thickness = 2
-    halo.Filled = false
-    halo.ZIndex = 2
-    halo.Transparency = 1
-    halo.Color = Color3.fromRGB(255, 0, 0)
-    killauraESP[target] = halo
-end
-
-local function updateAura()
-    for player, halo in pairs(killauraESP) do
-        if player.Character and player.Character:FindFirstChild("HumanoidRootPart") then
-            local pos, onScreen = camera:WorldToViewportPoint(player.Character.HumanoidRootPart.Position)
-            halo.Position = Vector2.new(pos.X, pos.Y)
-            halo.Visible = onScreen and killauraEnabled
-            halo.Color = Color3.fromHSV(tick()%5/5,1,1)
-        else
-            halo.Visible = false
-        end
-    end
-end
-
-RunService.RenderStepped:Connect(function()
-    if not killauraEnabled then return end
-    for _, plr in pairs(Players:GetPlayers()) do
-        if plr ~= LP and plr.Character and plr.Character:FindFirstChild("HumanoidRootPart") then
-            local dist = (hrp.Position - plr.Character.HumanoidRootPart.Position).Magnitude
-            if dist < killauraRange then
-                game:GetService("ReplicatedStorage").Events.Hit:FireServer(plr.Character.HumanoidRootPart) -- Vuruş
-            end
-            if not killauraESP[plr] then createAuraHalo(plr) end
-        end
-    end
-    updateAura()
-end)
-
-PlayerTab:CreateToggle({
-    Name = "KillAura + Halo",
-    CurrentValue = false,
-    Callback = function(v)
-        killauraEnabled = v
-    end
-})
 
 
 local noclip = false
@@ -562,20 +489,6 @@ PlayerTab:CreateToggle({
     end
 })
 
-SkinsTab:CreateButton({
-    Name = "Become Invisible",
-    Callback = function()
-        if LP.Character then
-            for _, v in pairs(LP.Character:GetDescendants()) do
-                if v:IsA("BasePart") or v:IsA("Decal") then
-                    v.Transparency = 1
-                end
-            end
-        end
-    end
-})
-
-
 local playerNames = {}
 for _, plr in pairs(Players:GetPlayers()) do
     if plr ~= LP then
@@ -594,58 +507,6 @@ PlayerTab:CreateDropdown({
         end
     end
 })
-
-
-PlayerTab:CreateToggle({
-    Name = "God Mode",
-    CurrentValue = false,
-    Callback = function(state)
-        godModeEnabled = state
-        if state then
-            conns.god = RunService.Stepped:Connect(function()
-                if Hum then
-                    Hum.Health = Hum.MaxHealth
-                end
-            end)
-        else
-            if conns.god then conns.god:Disconnect() conns.god = nil end
-        end
-    end
-})
-
-RageTab:CreateButton({
-    Name = "Kill All Players",
-    Callback = function()
-        for _, p in pairs(Players:GetPlayers()) do
-            if p ~= LP and p.Character and p.Character:FindFirstChild("Humanoid") then
-                p.Character.Humanoid.Health = 0
-            end
-        end
-    end
-})
-
-local loopKillEnabled = false
-local loopKillConnection
-
-MainTab:CreateToggle({
-    Name = "Loop Kill",
-    CurrentValue = false,
-    Callback = function(value)
-        loopKillEnabled = value
-        if value then
-            loopKillConnection = RunService.Heartbeat:Connect(function()
-                for _, p in pairs(Players:GetPlayers()) do
-                    if p ~= LP and p.Character and p.Character:FindFirstChild("Humanoid") then
-                        p.Character.Humanoid.Health = 0
-                    end
-                end
-            end)
-        else
-            if loopKillConnection then loopKillConnection:Disconnect() loopKillConnection = nil end
-        end
-    end
-})
-
 
 RageTab:CreateToggle({
     Name = "Tp To Me",
