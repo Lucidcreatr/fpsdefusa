@@ -2,14 +2,14 @@
 Game : Defusal FPS
 Versions : 1.3
 
-# Developer
+# Developer;
 **Lucid**
 
-# EnCoder 
+# EnCoder;
 **Lucid**
 
-# OBF
+# OBF;
 **Lucid**
 
-# CTT
+# CTT;
 **Lucid - SXMCODE**
