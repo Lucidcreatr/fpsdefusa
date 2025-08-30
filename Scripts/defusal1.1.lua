@@ -1,88 +1,96 @@
-if game.PlaceId == 79393329652220 then -- defusal fps place ID
+-- SXMLIB Full GUI Loader & Tools
+if game.PlaceId ~= 79393329652220 then return end -- sadece doğru oyun
 
+-- Kütüphaneyi yükle
 local success, SXMLIB = pcall(function()
     return loadstring(game:HttpGet('https://raw.githubusercontent.com/Lucidcreatr/sxm1/refs/heads/main/sxmlib/sxmlua.lua'))()
 end)
-
 if not success then
     warn("SXMLIB yüklenemedi: "..tostring(SXMLIB))
     return
 end
 
--- GUI Başlat
-local Window = SXMLIB.new({
-    Theme = SXMLIB.Themes.Blue
-})
+-- Temalar
+local themes = {
+    Red = SXMLIB.Themes.Red,
+    Blue = SXMLIB.Themes.Blue,
+    Black = SXMLIB.Themes.Dark,
+    White = SXMLIB.Themes.Light,
+    Grey = SXMLIB.Themes.Gray,
+    Burgundy = SXMLIB.Themes.Burgundy,
+    Purple = SXMLIB.Themes.Purple,
+    Green = SXMLIB.Themes.Green,
+    Yellow = SXMLIB.Themes.Yellow,
+    Cyan = SXMLIB.Themes.Cyan
+}
 
--- Sekmeler (Sections)
+-- Window
+local Window = SXMLIB.new({Theme=themes.Blue, Name="SXMLIB Tools"})
+
+-- Tabs / Sections
 local MainTab   = Window:CreateWindow({Name="ESP"})
 local AimBotTab = Window:CreateWindow({Name="AimBot"})
 local PlayerTab = Window:CreateWindow({Name="Player"})
 local RageTab   = Window:CreateWindow({Name="Rage"})
 local SkinsTab  = Window:CreateWindow({Name="Skins"})
 
-local MainSection   = MainTab:CreateSection("Main")
-local AimBotSection = AimBotTab:CreateSection("Main")
-local PlayerSection = PlayerTab:CreateSection("Main")
-local RageSection   = RageTab:CreateSection("Main")
-local SkinsSection  = SkinsTab:CreateSection("Main")
+local MainSec   = MainTab:CreateSection("Main")
+local AimBotSec = AimBotTab:CreateSection("Main")
+local PlayerSec = PlayerTab:CreateSection("Main")
+local RageSec   = RageTab:CreateSection("Main")
+local SkinsSec  = SkinsTab:CreateSection("Main")
 
 -- STATE
-local boxESPEnabled, healthESPEnabled, aimbotEnabled = false,false,false
-local drawCircleEnabled, circleScale = false,50
-local spinBotEnabled, speedHackEnabled, flyEnabled, bigHitboxEnabled, bunnyHopEnabled = false,false,false,false,false
-local hackedSpeed, normalSpeed, flySpeed = 60,16,60
-local aimbotTarget, savedPosition = nil,nil
-local state = {speed=false,walk=60,hitboxSize=5,infiniteAmmo=false}
-local boxes, originalHeadSizes = {},{}
-
+local state = {
+    boxESP=false, healthESP=false, aimbot=false, drawCircle=false, circleScale=50,
+    spin=false, speed=false, fly=false, bigHitbox=false, bunny=false,
+    flySpeed=60, normalSpeed=16, walk=60, infiniteAmmo=false
+}
+local boxes, originalHeads = {},{}
+local LP = game.Players.LocalPlayer
 local Players = game:GetService("Players")
 local RunService = game:GetService("RunService")
 local UserInputService = game:GetService("UserInputService")
 local camera = workspace.CurrentCamera
-local LP = Players.LocalPlayer
 local Hum = LP.Character and LP.Character:FindFirstChild("Humanoid")
 local hrp = LP.Character and LP.Character:FindFirstChild("HumanoidRootPart")
+local savedPos
+local bodyVel
+local connections = {}
 
--- Notification Örneği
-Window:Notify("SXMLIB Yüklendi!",3)
+-- Notification
+Window:Notify("SXMLIB Full GUI Loaded", 3)
 
--- ESP Butonu
-MainSection:Button({label="Toggle ESP", callback=function()
-    boxESPEnabled = not boxESPEnabled
-    if boxESPEnabled then
-        for _,player in pairs(Players:GetPlayers()) do
-            if player~=LP and player.Character then
-                -- ESP logi
-            end
-        end
-    else
-        boxes={} -- temizleme
-    end
+-------------------
+-- Main Section --
+-------------------
+MainSec:Button({label="Toggle ESP", callback=function()
+    state.boxESP = not state.boxESP
 end})
 
--- AimBot Toggle
-AimBotSection:Toggle({label="Aimbot", callback=function(v) aimbotEnabled=v end})
-AimBotSection:Toggle({label="Draw Circle", callback=function(v) drawCircleEnabled=v end})
-AimBotSection:Slider({label="Circle Size", min=5, max=50, default=5, callback=function(v) circleScale=v end})
-AimBotSection:Toggle({label="TriggerBot", callback=function(v) triggerEnabled=v end})
-AimBotSection:Slider({label="Hitbox Size", min=1, max=350, default=state.hitboxSize, callback=function(v) state.hitboxSize=v end})
-AimBotSection:Toggle({label="Big Hitbox", callback=function(v) bigHitboxEnabled=v end})
+-------------------
+-- AimBot Section --
+-------------------
+AimBotSec:Toggle({label="Aimbot", callback=function(v) state.aimbot=v end})
+AimBotSec:Toggle({label="Draw Circle", callback=function(v) state.drawCircle=v end})
+AimBotSec:Slider({label="Circle Size", min=5,max=50,default=50,callback=function(v) state.circleScale=v end})
+AimBotSec:Toggle({label="TriggerBot", callback=function(v) state.trigger=v end})
+AimBotSec:Slider({label="Hitbox Size", min=1,max=350,default=5,callback=function(v) state.hitboxSize=v end})
+AimBotSec:Toggle({label="Big Hitbox", callback=function(v) state.bigHitbox=v end})
 
--- Player Tab
-PlayerSection:Slider({label="Fly Speed", min=0, max=150, default=flySpeed, callback=function(v) flySpeed=v end})
-PlayerSection:Toggle({label="SpinBot", callback=function(v) spinBotEnabled=v end})
-PlayerSection:Toggle({label="Speed Hack", callback=function(v)
-    state.speed=v
-    if Hum then Hum.WalkSpeed = v and state.walk or normalSpeed end
-end})
-PlayerSection:Slider({label="Speed", min=20,max=150,default=state.walk, callback=function(v) state.walk=v if state.speed and Hum then Hum.WalkSpeed=v end end})
-PlayerSection:Toggle({label="Fly", callback=function(v) flyEnabled=v end})
-PlayerSection:Toggle({label="Bunny Hop", callback=function(v) bunnyHopEnabled=v end})
-PlayerSection:Button({label="Save Position", callback=function() if hrp then savedPosition=hrp.Position end end})
-PlayerSection:Button({label="Teleport to Saved", callback=function() if hrp and savedPosition then hrp.CFrame=CFrame.new(savedPosition) end end})
-PlayerSection:Toggle({label="NoClip", callback=function(v) noclip=v end})
-PlayerSection:Dropdown({label="Teleport To Player", options=(function()
+-------------------
+-- Player Section --
+-------------------
+PlayerSec:Slider({label="Fly Speed", min=0,max=150,default=60,callback=function(v) state.flySpeed=v end})
+PlayerSec:Toggle({label="SpinBot", callback=function(v) state.spin=v end})
+PlayerSec:Toggle({label="Speed Hack", callback=function(v) state.speed=v if Hum then Hum.WalkSpeed = v and state.walk or state.normalSpeed end end})
+PlayerSec:Slider({label="Speed", min=20,max=150,default=60,callback=function(v) state.walk=v if state.speed and Hum then Hum.WalkSpeed=v end end})
+PlayerSec:Toggle({label="Fly", callback=function(v) state.fly=v end})
+PlayerSec:Toggle({label="Bunny Hop", callback=function(v) state.bunny=v end})
+PlayerSec:Button({label="Save Position", callback=function() if hrp then savedPos=hrp.Position end end})
+PlayerSec:Button({label="Teleport to Saved", callback=function() if hrp and savedPos then hrp.CFrame=CFrame.new(savedPos) end end})
+PlayerSec:Toggle({label="NoClip", callback=function(v) state.noclip=v end})
+PlayerSec:Dropdown({label="Teleport To Player", options=(function()
     local t={} for _,p in pairs(Players:GetPlayers()) do if p~=LP then table.insert(t,p.Name) end end return t end)(), callback=function(selected)
         local target = Players:FindFirstChild(selected)
         if target and target.Character and hrp then
@@ -90,13 +98,22 @@ PlayerSection:Dropdown({label="Teleport To Player", options=(function()
         end
 end})
 
--- Rage Tab
-RageSection:Toggle({label="Auto Plant/Defuse", callback=function(v) autoTask=v end})
-RageSection:Toggle({label="Tp To Me", callback=function(v) tpToMe=v end})
-RageSection:Toggle({label="Infinite Ammo", callback=function(v) state.infiniteAmmo=v end})
+-------------------
+-- Rage Section --
+-------------------
+RageSec:Toggle({label="Auto Plant/Defuse", callback=function(v) state.autoTask=v end})
+RageSec:Toggle({label="Tp To Me", callback=function(v) state.tpToMe=v end})
+RageSec:Toggle({label="Infinite Ammo", callback=function(v) state.infiniteAmmo=v end})
 
--- Skins Tab
-SkinsSection:Toggle({label="Rainbow Hands", callback=function(v) rainbowHands=v end})
-SkinsSection:Slider({label="Color Change Speed", min=0.1,max=2,default=0.1,callback=function(v) colorChangeSpeed=v end})
+-------------------
+-- Skins Section --
+-------------------
+SkinsSec:Toggle({label="Rainbow Hands", callback=function(v) state.rainbow=v end})
+SkinsSec:Slider({label="Color Change Speed", min=0.1,max=2,default=0.1,callback=function(v) state.colorSpeed=v end})
 
-end
+-------------------
+-- RenderStepped / Loops --
+-------------------
+RunService.RenderStepped:Connect(function()
+    -- Buraya ESP, Aimbot, Circle vs callbackleri ekleyebilirsin
+end)
