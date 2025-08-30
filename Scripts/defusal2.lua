@@ -1,5 +1,5 @@
--- SXMLIB Full GUI & Tools
-if game.PlaceId ~= 79393329652220 then return end
+-- SXMLIB Full GUI Loader & Tools
+if game.PlaceId ~= 79393329652220 then return end -- sadece doğru oyun
 
 -- Kütüphaneyi yükle
 local success, SXMLIB = pcall(function()
@@ -25,15 +25,17 @@ local themes = {
 }
 
 -- Window
-local Window = SXMLIB.new({Theme=themes.Blue, Name="SXMLIB Tools"})
-Window:Notify("SXMLIB Full GUI Loaded",3)
+local Window = SXMLIB:CreateWindow({
+    Name = "SXMLIB Tools",
+    Theme = themes.Blue
+})
 
 -- Tabs
-local MainTab   = Window:CreateWindow({Name="ESP"})
-local AimBotTab = Window:CreateWindow({Name="AimBot"})
-local PlayerTab = Window:CreateWindow({Name="Player"})
-local RageTab   = Window:CreateWindow({Name="Rage"})
-local SkinsTab  = Window:CreateWindow({Name="Skins"})
+local MainTab   = Window:CreateTab("ESP")
+local AimBotTab = Window:CreateTab("AimBot")
+local PlayerTab = Window:CreateTab("Player")
+local RageTab   = Window:CreateTab("Rage")
+local SkinsTab  = Window:CreateTab("Skins")
 
 -- Sections
 local MainSec   = MainTab:CreateSection("Main")
@@ -42,7 +44,7 @@ local PlayerSec = PlayerTab:CreateSection("Main")
 local RageSec   = RageTab:CreateSection("Main")
 local SkinsSec  = SkinsTab:CreateSection("Main")
 
--- Services & State
+-- STATE
 local LP = game.Players.LocalPlayer
 local Players = game:GetService("Players")
 local RunService = game:GetService("RunService")
@@ -50,146 +52,101 @@ local UserInputService = game:GetService("UserInputService")
 local camera = workspace.CurrentCamera
 local Hum = LP.Character and LP.Character:FindFirstChild("Humanoid")
 local hrp = LP.Character and LP.Character:FindFirstChild("HumanoidRootPart")
-local savedPos
-local bodyVel
-local connections = {}
 
 local state = {
-    boxESP=false, healthESP=false, aimbot=false, drawCircle=false, circleScale=50, trigger=false, hitboxSize=5, bigHitbox=false,
-    spin=false, speed=false, fly=false, flySpeed=60, walk=60, normalSpeed=16, bunny=false, noclip=false, tpToMe=false, autoTask=false,
-    infiniteAmmo=false, rainbow=false, colorSpeed=0.1
+    boxESP=false, aimbot=false, drawCircle=false, circleScale=50,
+    spin=false, speed=false, fly=false, flySpeed=60, walk=16,
+    bigHitbox=false, bunny=false, savedPos=nil, infiniteAmmo=false
 }
-
 local boxes, originalHeads = {},{}
-local circle = Drawing.new("Circle")
-circle.Visible=false
-circle.Color=Color3.fromRGB(255,0,230)
-circle.Radius=state.circleScale
-circle.Thickness=2
-circle.Filled=false
 
--- Character Added
-LP.CharacterAdded:Connect(function(char)
-    Hum = char:WaitForChild("Humanoid")
-    hrp = char:WaitForChild("HumanoidRootPart")
-    if state.fly then
-        bodyVel = Instance.new("BodyVelocity")
-        bodyVel.MaxForce = Vector3.new(1e5,1e5,1e5)
-        bodyVel.P=1e4
-        bodyVel.Velocity=Vector3.zero
-        bodyVel.Parent=hrp
-    end
-end)
+-- Notifikasyon
+Window:Notify("SXMLIB Full GUI Loaded", 3)
 
--- Functions
+-- Helper: Create ESP Box
 local function createBox(char)
-    local success, box = pcall(function()
-        local b = Drawing.new("Square")
-        b.Visible=false
-        b.Color=Color3.new(1,0,0)
-        b.Thickness=2
-        b.Filled=false
-        b.Character=char
-        table.insert(boxes,b)
-        RunService.RenderStepped:Connect(function()
-            if char and char:FindFirstChild("HumanoidRootPart") then
-                local vec,onScreen = camera:WorldToViewportPoint(char.HumanoidRootPart.Position)
-                if onScreen then
-                    local size = 2000/vec.Z
-                    b.Size=Vector2.new(size,size)
-                    b.Position=Vector2.new(vec.X-size/2, vec.Y-size/2)
-                    b.Visible=true
-                else
-                    b.Visible=false
-                end
+    local box = Drawing.new("Square")
+    box.Visible = true
+    box.Color = Color3.new(1,0,0)
+    box.Thickness = 2
+    box.Filled = false
+    table.insert(boxes, box)
+
+    RunService.RenderStepped:Connect(function()
+        if char and char:FindFirstChild("HumanoidRootPart") then
+            local pos, onScreen = camera:WorldToViewportPoint(char.HumanoidRootPart.Position)
+            if onScreen then
+                local size = 2000 / pos.Z
+                box.Size = Vector2.new(size,size)
+                box.Position = Vector2.new(pos.X - size/2, pos.Y - size/2)
+                box.Visible = true
             else
-                b.Visible=false
+                box.Visible = false
             end
-        end)
+        else
+            box.Visible = false
+        end
     end)
-    if not success then warn("ESP Box Error: "..tostring(box)) end
 end
 
-local function removeBox(char)
-    for i=#boxes,1,-1 do
-        if boxes[i].Character==char then
-            boxes[i]:Remove()
-            table.remove(boxes,i)
+-- Main Tab
+MainSec:CreateButton({
+    Name = "Toggle ESP",
+    Callback = function()
+        state.boxESP = not state.boxESP
+        if state.boxESP then
+            for _, plr in pairs(Players:GetPlayers()) do
+                if plr ~= LP and plr.Character then createBox(plr.Character) end
+            end
+        else
+            for _, b in pairs(boxes) do pcall(function() b:Remove() end) end
+            boxes = {}
         end
     end
-end
+})
 
--- Player Added
-local function onPlayerAdded(plr)
-    if plr==LP then return end
-    local char = plr.Character or plr.CharacterAdded:Wait()
-    if state.boxESP then createBox(char) end
-    plr.CharacterAdded:Connect(function(newChar)
-        if state.boxESP then createBox(newChar) end
-    end)
-end
+-- AimBot Tab
+AimBotSec:CreateToggle({Name="Aimbot", CurrentValue=false, Callback=function(v) state.aimbot=v end})
+AimBotSec:CreateToggle({Name="Draw Circle", CurrentValue=false, Callback=function(v) state.drawCircle=v end})
+AimBotSec:CreateSlider({Name="Circle Size", Min=5,Max=50,Default=50,Callback=function(v) state.circleScale=v end})
+AimBotSec:CreateToggle({Name="TriggerBot", CurrentValue=false, Callback=function(v) state.trigger=v end})
+AimBotSec:CreateSlider({Name="Hitbox Size", Min=1,Max=350,Default=5,Callback=function(v) state.hitboxSize=v end})
+AimBotSec:CreateToggle({Name="Big Hitbox", CurrentValue=false, Callback=function(v) state.bigHitbox=v end})
 
-local function onPlayerRemoving(plr)
-    if plr.Character then removeBox(plr.Character) end
-end
-
-for _,plr in pairs(Players:GetPlayers()) do if plr~=LP then onPlayerAdded(plr) end end
-Players.PlayerAdded:Connect(onPlayerAdded)
-Players.PlayerRemoving:Connect(onPlayerRemoving)
-
--- Main Section
-MainSec:Button({label="Toggle ESP", callback=function() state.boxESP=not state.boxESP end})
-
--- AimBot Section
-AimBotSec:Toggle({label="Aimbot", callback=function(v) state.aimbot=v end})
-AimBotSec:Toggle({label="Draw Circle", callback=function(v) state.drawCircle=v circle.Visible=v end})
-AimBotSec:Slider({label="Circle Size", min=5,max=50,default=50,callback=function(v) state.circleScale=v circle.Radius=v end})
-AimBotSec:Toggle({label="TriggerBot", callback=function(v) state.trigger=v end})
-AimBotSec:Slider({label="Hitbox Size", min=1,max=350,default=5,callback=function(v) state.hitboxSize=v end})
-AimBotSec:Toggle({label="Big Hitbox", callback=function(v) state.bigHitbox=v end})
-
--- Player Section
-PlayerSec:Slider({label="Fly Speed", min=0,max=150,default=60,callback=function(v) state.flySpeed=v end})
-PlayerSec:Toggle({label="SpinBot", callback=function(v) state.spin=v end})
-PlayerSec:Toggle({label="Speed Hack", callback=function(v) state.speed=v if Hum then Hum.WalkSpeed= v and state.walk or state.normalSpeed end end})
-PlayerSec:Slider({label="Speed", min=20,max=150,default=60,callback=function(v) state.walk=v if state.speed and Hum then Hum.WalkSpeed=v end end})
-PlayerSec:Toggle({label="Fly", callback=function(v) state.fly=v end})
-PlayerSec:Toggle({label="Bunny Hop", callback=function(v) state.bunny=v end})
-PlayerSec:Button({label="Save Position", callback=function() if hrp then savedPos=hrp.Position end end})
-PlayerSec:Button({label="Teleport to Saved", callback=function() if hrp and savedPos then hrp.CFrame=CFrame.new(savedPos) end end})
-PlayerSec:Toggle({label="NoClip", callback=function(v) state.noclip=v end})
-PlayerSec:Dropdown({label="Teleport To Player", options=(function() local t={} for _,p in pairs(Players:GetPlayers()) do if p~=LP then table.insert(t,p.Name) end end return t end)(), callback=function(selected)
-    local target = Players:FindFirstChild(selected)
-    if target and target.Character and hrp then hrp.CFrame=target.Character.HumanoidRootPart.CFrame+Vector3.new(0,5,0) end
+-- Player Tab
+PlayerSec:CreateSlider({Name="Fly Speed", Min=0,Max=150,Default=60,Callback=function(v) state.flySpeed=v end})
+PlayerSec:CreateToggle({Name="SpinBot", CurrentValue=false, Callback=function(v) state.spin=v end})
+PlayerSec:CreateToggle({Name="Speed Hack", CurrentValue=false, Callback=function(v) 
+    state.speed=v
+    if Hum then Hum.WalkSpeed=v and state.walk or 16 end
 end})
+PlayerSec:CreateSlider({Name="Speed", Min=20,Max=150,Default=60,Callback=function(v) state.walk=v if state.speed and Hum then Hum.WalkSpeed=v end end})
+PlayerSec:CreateToggle({Name="Fly", CurrentValue=false, Callback=function(v) state.fly=v end})
+PlayerSec:CreateToggle({Name="Bunny Hop", CurrentValue=false, Callback=function(v) state.bunny=v end})
+PlayerSec:CreateButton({Name="Save Position", Callback=function() if hrp then state.savedPos=hrp.Position end end})
+PlayerSec:CreateButton({Name="Teleport to Saved", Callback=function() if hrp and state.savedPos then hrp.CFrame=CFrame.new(state.savedPos) end end})
+PlayerSec:CreateToggle({Name="NoClip", CurrentValue=false, Callback=function(v) state.noclip=v end})
+PlayerSec:CreateDropdown({
+    Name="Teleport To Player",
+    Options=(function() local t={} for _,p in pairs(Players:GetPlayers()) do if p~=LP then table.insert(t,p.Name) end end return t end)(),
+    Callback=function(sel)
+        local target=Players:FindFirstChild(sel)
+        if target and target.Character and hrp then
+            hrp.CFrame=target.Character.HumanoidRootPart.CFrame+Vector3.new(0,5,0)
+        end
+    end
+})
 
--- Rage Section
-RageSec:Toggle({label="Auto Plant/Defuse", callback=function(v) state.autoTask=v end})
-RageSec:Toggle({label="Tp To Me", callback=function(v) state.tpToMe=v end})
-RageSec:Toggle({label="Infinite Ammo", callback=function(v) state.infiniteAmmo=v end})
+-- Rage Tab
+RageSec:CreateToggle({Name="Auto Plant/Defuse", CurrentValue=false, Callback=function(v) state.autoTask=v end})
+RageSec:CreateToggle({Name="Tp To Me", CurrentValue=false, Callback=function(v) state.tpToMe=v end})
+RageSec:CreateToggle({Name="Infinite Ammo", CurrentValue=false, Callback=function(v) state.infiniteAmmo=v end})
 
--- Skins Section
-SkinsSec:Toggle({label="Rainbow Hands", callback=function(v) state.rainbow=v end})
-SkinsSec:Slider({label="Color Change Speed", min=0.1,max=2,default=0.1,callback=function(v) state.colorSpeed=v end})
+-- Skins Tab
+SkinsSec:CreateToggle({Name="Rainbow Hands", CurrentValue=false, Callback=function(v) state.rainbow=v end})
+SkinsSec:CreateSlider({Name="Color Change Speed", Min=0.1,Max=2,Default=0.1,Callback=function(v) state.colorSpeed=v end})
 
--- RenderStepped Loop
+-- RenderStepped loop
 RunService.RenderStepped:Connect(function()
-    -- BunnyHop
-    if state.bunny and Hum and Hum.FloorMaterial~=Enum.Material.Air then Hum.Jump=true end
-    -- NoClip
-    if state.noclip and LP.Character then
-        for _,part in pairs(LP.Character:GetDescendants()) do if part:IsA("BasePart") then part.CanCollide=false end end
-    end
-    -- Fly
-    if state.fly and hrp and bodyVel then
-        local moveDir=Vector3.zero
-        if UserInputService:IsKeyDown(Enum.KeyCode.W) then moveDir+=camera.CFrame.LookVector end
-        if UserInputService:IsKeyDown(Enum.KeyCode.S) then moveDir-=camera.CFrame.LookVector end
-        if UserInputService:IsKeyDown(Enum.KeyCode.A) then moveDir-=camera.CFrame.RightVector end
-        if UserInputService:IsKeyDown(Enum.KeyCode.D) then moveDir+=camera.CFrame.RightVector end
-        if UserInputService:IsKeyDown(Enum.KeyCode.Space) then moveDir+=Vector3.new(0,1,0) end
-        if UserInputService:IsKeyDown(Enum.KeyCode.LeftControl) then moveDir-=Vector3.new(0,1,0) end
-        if moveDir.Magnitude>0 then moveDir=moveDir.Unit*state.flySpeed end
-        bodyVel.Velocity=moveDir
-    end
+    -- Buraya ESP, Aimbot, Circle vs callbackleri eklenebilir
 end)
