@@ -1,5 +1,5 @@
--- SXMLIB Full GUI Loader & Tools
-if game.PlaceId ~= 79393329652220 then return end -- sadece doğru oyun
+-- SXMLIB Full GUI & Tools Loader
+if game.PlaceId ~= 79393329652220 then return end
 
 -- Kütüphaneyi yükle
 local success, SXMLIB = pcall(function()
@@ -12,41 +12,35 @@ end
 
 -- Temalar
 local themes = {
-    Red = SXMLIB.Themes.Red,
-    Blue = SXMLIB.Themes.Blue,
-    Black = SXMLIB.Themes.Dark,
-    White = SXMLIB.Themes.Light,
-    Grey = SXMLIB.Themes.Gray,
-    Burgundy = SXMLIB.Themes.Burgundy,
-    Purple = SXMLIB.Themes.Purple,
-    Green = SXMLIB.Themes.Green,
-    Yellow = SXMLIB.Themes.Yellow,
-    Cyan = SXMLIB.Themes.Cyan
+    Red=SXMLIB.Themes.Red, Blue=SXMLIB.Themes.Blue, Black=SXMLIB.Themes.Dark, White=SXMLIB.Themes.Light,
+    Grey=SXMLIB.Themes.Gray, Burgundy=SXMLIB.Themes.Burgundy, Purple=SXMLIB.Themes.Purple,
+    Green=SXMLIB.Themes.Green, Yellow=SXMLIB.Themes.Yellow, Cyan=SXMLIB.Themes.Cyan
 }
 
 -- Window
 local Window = SXMLIB.new({Theme=themes.Blue, Name="SXMLIB Tools"})
 
--- Tabs / Sections
+-- Tabs
 local MainTab   = Window:CreateWindow({Name="ESP"})
 local AimBotTab = Window:CreateWindow({Name="AimBot"})
 local PlayerTab = Window:CreateWindow({Name="Player"})
 local RageTab   = Window:CreateWindow({Name="Rage"})
 local SkinsTab  = Window:CreateWindow({Name="Skins"})
 
+-- Sections
 local MainSec   = MainTab:CreateSection("Main")
 local AimBotSec = AimBotTab:CreateSection("Main")
 local PlayerSec = PlayerTab:CreateSection("Main")
 local RageSec   = RageTab:CreateSection("Main")
 local SkinsSec  = SkinsTab:CreateSection("Main")
 
--- STATE
+-- State
 local state = {
     boxESP=false, healthESP=false, aimbot=false, drawCircle=false, circleScale=50,
     spin=false, speed=false, fly=false, bigHitbox=false, bunny=false,
-    flySpeed=60, normalSpeed=16, walk=60, infiniteAmmo=false
+    flySpeed=60, walk=60, normalSpeed=16, infiniteAmmo=false,
+    tpToMe=false, autoTask=false, rainbow=false, colorSpeed=0.1
 }
-local boxes, originalHeads = {},{}
 local LP = game.Players.LocalPlayer
 local Players = game:GetService("Players")
 local RunService = game:GetService("RunService")
@@ -55,8 +49,8 @@ local camera = workspace.CurrentCamera
 local Hum = LP.Character and LP.Character:FindFirstChild("Humanoid")
 local hrp = LP.Character and LP.Character:FindFirstChild("HumanoidRootPart")
 local savedPos
-local bodyVel
-local connections = {}
+local boxes, originalHeads, conns = {}, {}, {}
+local bodyVel, spinConn, flyConn, bunnyConn, rainbowConn, tpConn
 
 -- Notification
 Window:Notify("SXMLIB Full GUI Loaded", 3)
@@ -114,6 +108,19 @@ SkinsSec:Slider({label="Color Change Speed", min=0.1,max=2,default=0.1,callback=
 -------------------
 -- RenderStepped / Loops --
 -------------------
+local circle = Drawing.new("Circle")
+circle.Visible = false
+circle.Thickness = 2
+circle.Radius = state.circleScale
+circle.Color = Color3.fromRGB(255,0,230)
+
 RunService.RenderStepped:Connect(function()
-    -- Buraya ESP, Aimbot, Circle vs callbackleri ekleyebilirsin
+    -- Draw Circle
+    if state.drawCircle then
+        local mousePos = UserInputService:GetMouseLocation()
+        circle.Position = Vector2.new(mousePos.X, mousePos.Y)
+        circle.Visible = true
+    else
+        circle.Visible = false
+    end
 end)
